@@ -7,7 +7,7 @@
 #include <regex> // it's in std and described format is simple
 #include <string>
 
-message parse(std::string& line) {
+message parse(std::string line) {
     // requiring 2 digits means leading zeroes are necessary, incoming messages have id of 1-4
     // body is anything non-empty for now and will be looked at during processing as contents depends on id
     const std::regex format_re("^([0-9]{2}:[0-9]{2})\\ ([1-4])\\ (.+)$");

@@ -1,2 +1,2 @@
-add_executable(main main.cpp message.cpp)
-target_include_directories(main PUBLIC ${CMAKE_SOURCE_DIR}/inc)
+add_executable(queueproc main.cpp message.cpp)
+target_include_directories(queueproc PUBLIC ${CMAKE_SOURCE_DIR}/inc)

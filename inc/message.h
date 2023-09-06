@@ -1,5 +1,5 @@
-#ifndef MESSAGE_H
-#define MESSAGE_H
+#ifndef MESSAGE_H_
+#define MESSAGE_H_
 #include <chrono>
 #include <string>
 #include <ostream>
@@ -10,7 +10,10 @@ struct message {
     std::string body;
 
     void print(std::ostream& os);
+    bool operator==(const message& other) const {
+        return (other.id == id) && (other.time == time) && (other.body == body);
+    }
 };
 
-message parse(std::string& line);
+message parse(std::string line);
 #endif
