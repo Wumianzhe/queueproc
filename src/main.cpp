@@ -1,4 +1,5 @@
 #include <iostream>
+#include "message.h"
 
 using namespace std;
 
@@ -9,5 +10,8 @@ int main(int argc, char *argv[]) {
     }
     string filename = argv[1];
     cout << filename << endl;
+    string line = "08:48 1 client1";
+    message m = parse(line);
+    m.print(cout);
     return 0;
 }
