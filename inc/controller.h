@@ -27,6 +27,10 @@ class controller {
   void processSitDown(Min time, std::string client, int tableNum);
   void processWait(Min time, std::string client);
   void processLeft(Min time, std::string client);
+  std::string parseArrival(message m);
+  std::tuple<std::string,int> parseSitDown(message m);
+  std::string parseWait(message m);
+  std::string parseLeft(message m);
 
 public:
   void queueMessage(message m);
