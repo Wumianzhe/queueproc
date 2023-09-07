@@ -9,7 +9,7 @@ struct message {
     std::chrono::minutes time;
     std::string body;
 
-    void print(std::ostream& os);
+    std::string str();
     bool operator==(const message& other) const {
         return (other.id == id) && (other.time == time) && (other.body == body);
     }

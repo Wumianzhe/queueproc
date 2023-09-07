@@ -31,6 +31,6 @@ message parse(std::string line) {
     return message{id,time,sub_body};
 }
 
-void message::print(std::ostream& os) {
-    os << std::format("{:%R} {} {}\n",time,id,body);
+std::string message::str() {
+    return std::format("{:%R} {} {}\n",time,id,body);
 }
