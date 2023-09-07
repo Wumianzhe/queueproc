@@ -1,12 +1,13 @@
 #include "controller.h"
 #include <algorithm>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 
 controller::controller(int tableCount, Min openTime, Min closeTime,
                        int hourRate)
-    : tables(3), users(3), tCount(tableCount), openTime(openTime),
-      closeTime(closeTime) {}
+    : tables(tableCount), tableUsers(tableCount, ""), tCount(tableCount),
+      openTime(openTime), closeTime(closeTime) {}
 
 void controller::processQueue() {
   while (!inQueue.empty()) {
@@ -30,7 +31,7 @@ void controller::processQueue() {
     }
     case 4: {
       auto client = parseLeft(m);
-      processLeft(m.time,client);
+      processLeft(m.time, client);
       break;
     }
     default: { // shouldn't happen, but still good to have
@@ -39,10 +40,82 @@ void controller::processQueue() {
     }
   }
 }
-void controller::processArrival(Min time, std::string client) {}
-void controller::processSitDown(Min time, std::string client, int tableNum) {}
-void controller::processWait(Min time, std::string client) {}
-void controller::processLeft(Min time, std::string client) {}
+
+void controller::processArrival(Min time, std::string client) {
+  if (std::find(clientsInside.cbegin(), clientsInside.cend(), client) !=
+      clientsInside.cend()) {
+    outQueue.push({13, time, "YouShallNotPass"});
+    return;
+  }
+  if (time < openTime) {
+    outQueue.push({13, time, "NotOpenYet"});
+    return;
+  }
+  clientsInside.emplace_back(client);
+}
+void controller::processSitDown(Min time, std::string client, int tableNum) {
+  if (std::find(clientsInside.cbegin(), clientsInside.cend(), client) ==
+      clientsInside.cend()) {
+    outQueue.push({13, time, "ClientUnknown"});
+    return;
+  }
+  if (tables[tableNum - 1].isFull()) {
+    outQueue.push({13, time, "PlaceIsBusy"});
+    return;
+  }
+  if (int i = std::distance(
+          tableUsers.cbegin(),
+          std::find(tableUsers.cbegin(), tableUsers.cend(), client))) {
+    tables[i].endJob(time);
+    tableUsers[i] = "";
+  }
+  tables[tableNum - 1].startJob(time);
+  tableUsers[tableNum - 1] = client;
+}
+void controller::processWait(Min time, std::string client) {
+  if (std::find(clientsInside.cbegin(), clientsInside.cend(), client) ==
+      clientsInside.cend()) {
+    outQueue.push({13, time, "ClientUnknown"});
+    return;
+  }
+  // empty table found
+  if (std::find(tableUsers.cbegin(), tableUsers.cend(), "") !=
+      tableUsers.cend()) {
+    outQueue.push({13, time, "ICanWaitNoLonger!"});
+    return;
+  }
+  // too many people
+  if (userQueue.size() > tCount) {
+    outQueue.push({11, time, client});
+    clientsInside.erase(
+        std::find(clientsInside.cbegin(), clientsInside.cend(), client));
+    return;
+  }
+  userQueue.push(client);
+}
+void controller::processLeft(Min time, std::string client) {
+  if (std::find(clientsInside.cbegin(), clientsInside.cend(), client) ==
+      clientsInside.cend()) {
+    outQueue.push({13, time, "ClientUnknown"});
+    return;
+  }
+  clientsInside.erase(
+      std::find(clientsInside.cbegin(), clientsInside.cend(), client));
+  if (int i = std::distance(
+          tableUsers.cbegin(),
+          std::find(tableUsers.cbegin(), tableUsers.cend(), client))) {
+    tables[i].endJob(time);
+    if (userQueue.empty()) {
+      tableUsers[i] = "";
+    } else {
+      auto nextClient = userQueue.front();
+      userQueue.pop();
+      outQueue.push({12, time, nextClient});
+      tables[i].startJob(time);
+      tableUsers[i] = nextClient;
+    }
+  }
+}
 
 std::string controller::parseArrival(message m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
@@ -106,7 +179,15 @@ void controller::printOut(std::ostream &os) {
     outQueue.pop();
   }
 }
-void controller::printFooter(std::ostream &os) {
+void controller::printClose(std::ostream &os) {
+  for (const auto &client : clientsInside) {
+    outQueue.push({11, closeTime, client});
+    auto pos = std::find(tableUsers.cbegin(), tableUsers.cend(), client);
+    if (pos != tableUsers.cend()) {
+      int i = std::distance(tableUsers.cbegin(), pos);
+      tables[i].endJob(closeTime);
+    }
+  }
   os << std::format("{:%R}\n", closeTime);
   // don't know of an easy way to get pairs (index,element) in C++
   for (int i = 0; i < tCount; i++) {
