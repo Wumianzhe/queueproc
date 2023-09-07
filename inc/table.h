@@ -4,7 +4,7 @@
 #include <chrono>
 #include <string>
 
-class table {
+class Table {
   bool full = false;
   std::chrono::minutes full_since;
 

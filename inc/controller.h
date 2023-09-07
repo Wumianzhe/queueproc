@@ -8,13 +8,12 @@
 #include <ostream>
 #include <queue>
 
-class controller {
+class Controller {
   using Min = std::chrono::minutes;
-  controller(int tableCount, Min openTime, Min closeTime, int hourRate);
   std::queue<message> inQueue;
   std::queue<message> outQueue;
 
-  std::vector<table> tables;
+  std::vector<Table> tables;
   std::vector<std::string> clientsInside;
   std::vector<std::string> tableUsers;
   std::queue<std::string> userQueue;
@@ -34,6 +33,7 @@ class controller {
   std::string parseLeft(message m);
 
 public:
+  Controller(int tableCount, Min openTime, Min closeTime, int hourRate);
   void queueMessage(message m);
   void processQueue();
   void printOpen(std::ostream &os = std::cout);
