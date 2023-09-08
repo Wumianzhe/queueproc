@@ -8,6 +8,7 @@ TEST_CASE("Table time accounting") {
     std::chrono::minutes startTime = 1h + 15min;
     std::chrono::minutes endTime = 1h + 20min;
     t.startJob(startTime);
-    REQUIRE_EQ(t.getUtilization(),startTime - endTime);
+    t.endJob(endTime);
+    REQUIRE_EQ(t.getUtilization(),endTime - startTime);
     REQUIRE_EQ(t.getBillableHours(), 1);
 }

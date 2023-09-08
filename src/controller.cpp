@@ -35,7 +35,7 @@ void Controller::processQueue() {
       break;
     }
     default: { // shouldn't happen, but still good to have
-      throw std::invalid_argument(m.str());
+      throw std::invalid_argument(m.toString());
     }
     }
   }
@@ -122,14 +122,14 @@ std::string Controller::parseArrival(message m) {
         return isalnum(c) || (c == '_');
       })) {
     throw std::invalid_argument(
-        m.str()); // what is expected to be a client name, is not
+        m.toString()); // what is expected to be a client name, is not
   }
   return m.body;
 }
 std::tuple<std::string, int> Controller::parseSitDown(message m) {
   auto delPos = m.body.find(' ');
   if (std::string::npos == delPos || m.body.rfind(' ') != delPos) {
-    throw std::invalid_argument(m.str()); // body is not two "words"
+    throw std::invalid_argument(m.toString()); // body is not two "words"
   }
   auto client = m.body.substr(0, delPos);
   auto table = m.body.substr(0, delPos);
@@ -137,16 +137,16 @@ std::tuple<std::string, int> Controller::parseSitDown(message m) {
   try {
     tableNum = stoi(table);
   } catch (std::invalid_argument const &ex) {
-    throw std::invalid_argument(m.str()); // second part is not a number
+    throw std::invalid_argument(m.toString()); // second part is not a number
   }
   if (tableNum > tCount) {
-    throw std::invalid_argument(m.str()); // table number is out of range
+    throw std::invalid_argument(m.toString()); // table number is out of range
   }
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
     throw std::invalid_argument(
-        m.str()); // what is expected to be a client name, is not
+        m.toString()); // what is expected to be a client name, is not
   }
   return {client, tableNum};
 }
@@ -155,7 +155,7 @@ std::string Controller::parseWait(message m) {
         return isalnum(c) || (c == '_');
       })) {
     throw std::invalid_argument(
-        m.str()); // what is expected to be a client name, is not
+        m.toString()); // what is expected to be a client name, is not
   }
   return m.body;
 }
@@ -164,7 +164,7 @@ std::string Controller::parseLeft(message m) {
         return isalnum(c) || (c == '_');
       })) {
     throw std::invalid_argument(
-        m.str()); // what is expected to be a client name, is not
+        m.toString()); // what is expected to be a client name, is not
   }
   return m.body;
 }
@@ -175,7 +175,7 @@ void Controller::printOpen(std::ostream &os) {
 }
 void Controller::printOut(std::ostream &os) {
   while (!outQueue.empty()) {
-    os << outQueue.front().str() << "\n";
+    os << outQueue.front().toString() << "\n";
     outQueue.pop();
   }
 }
