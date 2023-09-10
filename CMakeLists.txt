@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(src)
-if (DEFINED build_tests)
+if (BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 add_executable(main src/main.cpp)
