@@ -7,9 +7,9 @@
 #include <regex> // it's in std and described format is simple
 #include <string>
 
-Message::Message(const int id, const std::chrono::minutes& time,const std::string& body):time{time},id{id},body{body} {
+MessageAny::MessageAny(int id, std::chrono::minutes time, std::string body):time{time},id{id},body{body} {
 }
-Message::Message(const std::string& line) {
+MessageAny::MessageAny(const std::string& line) {
     // requiring 2 digits means leading zeroes are necessary, incoming messages have id of 1-4
     // body is anything non-empty for now and will be looked at later as contents depends on id
     const std::regex format_re("^([0-9]{2}:[0-9]{2})\\ ([1-4])\\ (.+)$");
@@ -33,11 +33,27 @@ Message::Message(const std::string& line) {
     body=sub_body;
 }
 
-std::string Message::toString() {
+std::string MessageAny::toString() {
     return std::format("{:%R} {} {}\n",time,id,body);
 }
 
-MessageArrived::MessageArrived(const Message& m):Message(m) {
+std::string MessageArrived::toString() {
+    return std::format("{:%R} 1 {}\n",time,client);
+}
+
+std::string MessageSatDown::toString() {
+    return std::format("{:%R} 2 {} {}\n",time,client,tableNum);
+}
+
+std::string MessageWaiting::toString() {
+    return std::format("{:%R} 3 {}\n",time,client);
+}
+
+std::string MessageLeft::toString() {
+    return std::format("{:%R} 4 {}\n",time,client);
+}
+
+MessageArrived::MessageArrived(MessageAny m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
@@ -47,43 +63,45 @@ MessageArrived::MessageArrived(const Message& m):Message(m) {
   time = m.time;
   client = m.body;
 }
-MessageSatDown::MessageSatDown(const Message& m) {
+std::tuple<std::string, int> Controller::parseSitDown(Message m) {
   auto delPos = m.body.find(' ');
   if (std::string::npos == delPos || m.body.rfind(' ') != delPos) {
     throw std::invalid_argument(m.toString()); // body is not two "words"
   }
-  client = m.body.substr(0, delPos);
+  auto client = m.body.substr(0, delPos);
   auto table = m.body.substr(0, delPos);
+  int tableNum;
   try {
     tableNum = stoi(table);
   } catch (std::invalid_argument const &ex) {
     throw std::invalid_argument(m.toString()); // second part is not a number
   }
+  if (tableNum > tCount) {
+    throw std::invalid_argument(m.toString()); // table number is out of range
+  }
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
     throw std::invalid_argument(
         m.toString()); // what is expected to be a client name, is not
   }
-  time = m.time;
+  return {client, tableNum};
 }
-MessageWaiting::MessageWaiting(const Message& m) {
+std::string Controller::parseWait(Message m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
     throw std::invalid_argument(
         m.toString()); // what is expected to be a client name, is not
   }
-  time = m.time;
-  client = m.body;
+  return m.body;
 }
-MessageLeft::MessageLeft(const Message& m) {
+std::string Controller::parseLeft(Message m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
     throw std::invalid_argument(
         m.toString()); // what is expected to be a client name, is not
   }
-  time = m.time;
-  client = m.body;
+  return m.body;
 }
