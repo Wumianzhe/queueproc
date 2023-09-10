@@ -17,5 +17,6 @@ TEST_CASE("Message parsing") {
 
     using namespace std::chrono_literals;
     CHECK_EQ(parse("08:48 1 client1"),message{1,8h + 48min,"client1"});
+    CHECK_EQ(parse("09:00 1 client1"),message{1,9h,"client1"});
     CHECK_EQ(parse("09:54 2 client1 1"),message{2,9h + 54min,"client1 1"});
 }

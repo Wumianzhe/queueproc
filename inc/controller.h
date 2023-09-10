@@ -10,8 +10,8 @@
 
 class Controller {
   using Min = std::chrono::minutes;
-  std::queue<message> inQueue;
-  std::queue<message> outQueue;
+  std::queue<Message> inQueue;
+  std::queue<Message> outQueue;
 
   std::vector<Table> tables;
   std::vector<std::string> clientsInside;
@@ -27,14 +27,14 @@ class Controller {
   void processSitDown(Min time, std::string client, int tableNum);
   void processWait(Min time, std::string client);
   void processLeft(Min time, std::string client);
-  std::string parseArrival(message m);
-  std::tuple<std::string, int> parseSitDown(message m);
-  std::string parseWait(message m);
-  std::string parseLeft(message m);
+  std::string parseArrival(Message m);
+  std::tuple<std::string, int> parseSitDown(Message m);
+  std::string parseWait(Message m);
+  std::string parseLeft(Message m);
 
 public:
   Controller(int tableCount, Min openTime, Min closeTime, int hourRate);
-  void queueMessage(message m);
+  void queueMessage(Message m);
   void processQueue();
   void printOpen(std::ostream &os = std::cout);
   void printOut(std::ostream &os = std::cout);

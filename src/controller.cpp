@@ -1,5 +1,7 @@
 #include "controller.h"
 #include <algorithm>
+#include <format>
+#include <iomanip>
 #include <iterator>
 #include <stdexcept>
 #include <string>
@@ -7,11 +9,12 @@
 Controller::Controller(int tableCount, Min openTime, Min closeTime,
                        int hourRate)
     : tables(tableCount), tableUsers(tableCount, ""), tCount(tableCount),
-      openTime(openTime), closeTime(closeTime) {}
+      openTime(openTime), closeTime(closeTime), hourRate(hourRate) {}
 
 void Controller::processQueue() {
   while (!inQueue.empty()) {
     auto m = inQueue.front();
+    inQueue.pop();
     outQueue.push(m);
     switch (m.id) {
     case 1: {
@@ -63,9 +66,9 @@ void Controller::processSitDown(Min time, std::string client, int tableNum) {
     outQueue.push({13, time, "PlaceIsBusy"});
     return;
   }
-  if (int i = std::distance(
-          tableUsers.cbegin(),
-          std::find(tableUsers.cbegin(), tableUsers.cend(), client))) {
+  auto pos = std::find(tableUsers.cbegin(), tableUsers.cend(), client);
+  if (pos != tableUsers.cend()) {
+    auto i = std::distance(tableUsers.cbegin(), pos);
     tables[i].endJob(time);
     tableUsers[i] = "";
   }
@@ -101,23 +104,23 @@ void Controller::processLeft(Min time, std::string client) {
   }
   clientsInside.erase(
       std::find(clientsInside.cbegin(), clientsInside.cend(), client));
-  if (int i = std::distance(
-          tableUsers.cbegin(),
-          std::find(tableUsers.cbegin(), tableUsers.cend(), client))) {
+  auto pos = std::find(tableUsers.cbegin(), tableUsers.cend(), client);
+  if (pos != tableUsers.cend()) {
+    auto i = std::distance(tableUsers.cbegin(), pos);
     tables[i].endJob(time);
     if (userQueue.empty()) {
       tableUsers[i] = "";
     } else {
       auto nextClient = userQueue.front();
       userQueue.pop();
-      outQueue.push({12, time, nextClient});
+      outQueue.push({12, time, std::format("{} {}", nextClient, i + 1)});
       tables[i].startJob(time);
       tableUsers[i] = nextClient;
     }
   }
 }
 
-std::string Controller::parseArrival(message m) {
+std::string Controller::parseArrival(Message m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
@@ -126,13 +129,13 @@ std::string Controller::parseArrival(message m) {
   }
   return m.body;
 }
-std::tuple<std::string, int> Controller::parseSitDown(message m) {
+std::tuple<std::string, int> Controller::parseSitDown(Message m) {
   auto delPos = m.body.find(' ');
   if (std::string::npos == delPos || m.body.rfind(' ') != delPos) {
     throw std::invalid_argument(m.toString()); // body is not two "words"
   }
   auto client = m.body.substr(0, delPos);
-  auto table = m.body.substr(0, delPos);
+  auto table = m.body.substr(delPos + 1);
   int tableNum;
   try {
     tableNum = stoi(table);
@@ -142,7 +145,7 @@ std::tuple<std::string, int> Controller::parseSitDown(message m) {
   if (tableNum > tCount) {
     throw std::invalid_argument(m.toString()); // table number is out of range
   }
-  if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
+  if (!std::all_of(client.cbegin(), client.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
     throw std::invalid_argument(
@@ -150,7 +153,7 @@ std::tuple<std::string, int> Controller::parseSitDown(message m) {
   }
   return {client, tableNum};
 }
-std::string Controller::parseWait(message m) {
+std::string Controller::parseWait(Message m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
@@ -159,7 +162,7 @@ std::string Controller::parseWait(message m) {
   }
   return m.body;
 }
-std::string Controller::parseLeft(message m) {
+std::string Controller::parseLeft(Message m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
@@ -169,13 +172,13 @@ std::string Controller::parseLeft(message m) {
   return m.body;
 }
 
-void Controller::queueMessage(message m) { inQueue.push(m); }
+void Controller::queueMessage(Message m) { inQueue.push(m); }
 void Controller::printOpen(std::ostream &os) {
   os << std::format("{:%R}\n", openTime);
 }
 void Controller::printOut(std::ostream &os) {
   while (!outQueue.empty()) {
-    os << outQueue.front().toString() << "\n";
+    os << outQueue.front().toString();
     outQueue.pop();
   }
 }
@@ -191,7 +194,7 @@ void Controller::printClose(std::ostream &os) {
   os << std::format("{:%R}\n", closeTime);
   // don't know of an easy way to get pairs (index,element) in C++
   for (int i = 0; i < tCount; i++) {
-    Table t = tables[i];
+    Table &t = tables[i];
     os << format("{} {} {:%R}\n", i + 1, t.getBillableHours() * hourRate,
                  t.getUtilization());
   }
