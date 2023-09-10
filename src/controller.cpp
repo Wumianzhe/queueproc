@@ -117,7 +117,7 @@ void Controller::processLeft(Min time, std::string client) {
   }
 }
 
-std::string Controller::parseArrival(Message m) {
+std::string Controller::parseArrival(message m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
@@ -126,7 +126,7 @@ std::string Controller::parseArrival(Message m) {
   }
   return m.body;
 }
-std::tuple<std::string, int> Controller::parseSitDown(Message m) {
+std::tuple<std::string, int> Controller::parseSitDown(message m) {
   auto delPos = m.body.find(' ');
   if (std::string::npos == delPos || m.body.rfind(' ') != delPos) {
     throw std::invalid_argument(m.toString()); // body is not two "words"
@@ -150,7 +150,7 @@ std::tuple<std::string, int> Controller::parseSitDown(Message m) {
   }
   return {client, tableNum};
 }
-std::string Controller::parseWait(Message m) {
+std::string Controller::parseWait(message m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
@@ -159,7 +159,7 @@ std::string Controller::parseWait(Message m) {
   }
   return m.body;
 }
-std::string Controller::parseLeft(Message m) {
+std::string Controller::parseLeft(message m) {
   if (!std::all_of(m.body.cbegin(), m.body.cend(), [](const unsigned char c) {
         return isalnum(c) || (c == '_');
       })) {
@@ -169,7 +169,7 @@ std::string Controller::parseLeft(Message m) {
   return m.body;
 }
 
-void Controller::queueMessage(Message m) { inQueue.push(m); }
+void Controller::queueMessage(message m) { inQueue.push(m); }
 void Controller::printOpen(std::ostream &os) {
   os << std::format("{:%R}\n", openTime);
 }

@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     string filename = argv[1];
     cout << filename << endl;
     string line = "08:48 1 client1";
-    Message m = parse(line);
+    message m = parse(line);
     cout << m.toString();
     return 0;
 }
