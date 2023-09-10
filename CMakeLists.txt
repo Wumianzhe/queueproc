@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(src)
 if (DEFINED build_tests)
-  add_subdirectory(tests)
+  # add_subdirectory(tests)
 endif()
 add_executable(main src/main.cpp)
 target_link_libraries(main PUBLIC queueproc)

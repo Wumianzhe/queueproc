@@ -23,14 +23,15 @@ class Controller {
   Min closeTime;
   int hourRate;
 
-  void processArrival(Min time, std::string client);
-  void processSitDown(Min time, std::string client, int tableNum);
-  void processWait(Min time, std::string client);
-  void processLeft(Min time, std::string client);
+  void processMessage(const Message &m) {}
+  void processMessage(const MessageArrived &m);
+  void processMessage(const MessageSatDown &m);
+  void processMessage(const MessageWaiting &m);
+  void processMessage(const MessageLeft &m);
 
 public:
   Controller(int tableCount, Min openTime, Min closeTime, int hourRate);
-  void queueMessage(Message m);
+  void queueMessage(const Message&& m);
   void processQueue();
   void printOpen(std::ostream &os = std::cout);
   void printOut(std::ostream &os = std::cout);

@@ -5,59 +5,29 @@
 #include <ostream>
 
 struct Message {
-    Message(){}
-
-    virtual std::string toString() = 0;
-};
-
-struct MessageAny : public Message {
     int id;
     std::chrono::minutes time;
     std::string body;
 
-    MessageAny(int id, std::chrono::minutes time, std::string body);
-    MessageAny(const std::string& line);
-    bool operator==(const MessageAny &other) const {
+    Message(const int id,const std::chrono::minutes& time,const std::string& body);
+    Message(const std::string& line);
+    Message(const Message&) = default;
+    bool operator==(const Message &other) const {
       return (other.id == id) && (other.time == time) && (other.body == body);
     }
-    virtual std::string toString() override;
+    virtual std::string toString();
 };
 
 struct MessageArrived : public Message {
-    MessageArrived(MessageAny m);
-    std::chrono::minutes time;
-    std::string client;
-    bool operator==(const MessageArrived &other) const {
-      return (other.time == time) && (other.client == client);
-    }
-    virtual std::string toString() override;
+    MessageArrived(const Message& m);
 };
 struct MessageSatDown : public Message {
-    MessageSatDown(MessageAny m);
-    std::chrono::minutes time;
-    std::string client;
-    int tableNum;
-    bool operator==(const MessageSatDown &other) const {
-      return (other.time == time) && (other.client == client) && (other.tableNum == tableNum);
-    }
-    virtual std::string toString() override;
+    MessageSatDown(const Message& m);
 };
 struct MessageWaiting : public Message {
-    MessageWaiting(MessageAny m);
-    std::chrono::minutes time;
-    std::string client;
-    bool operator==(const MessageWaiting &other) const {
-      return (other.time == time) && (other.client == client);
-    }
-    virtual std::string toString() override;
+    MessageWaiting(const Message& m);
 };
 struct MessageLeft : public Message {
-    MessageLeft(MessageAny m);
-    std::chrono::minutes time;
-    std::string client;
-    bool operator==(const MessageLeft &other) const {
-      return (other.time == time) && (other.client == client);
-    }
-    virtual std::string toString() override;
+    MessageLeft(const Message& m);
 };
 #endif
