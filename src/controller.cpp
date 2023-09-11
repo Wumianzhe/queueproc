@@ -183,8 +183,9 @@ void Controller::printOut(std::ostream &os) {
   }
 }
 void Controller::printClose(std::ostream &os) {
+  std::sort(clientsInside.begin(),clientsInside.end());
   for (const auto &client : clientsInside) {
-    outQueue.push({11, closeTime, client});
+    os << Message{11, closeTime, client}.toString();
     auto pos = std::find(tableUsers.cbegin(), tableUsers.cend(), client);
     if (pos != tableUsers.cend()) {
       int i = std::distance(tableUsers.cbegin(), pos);
